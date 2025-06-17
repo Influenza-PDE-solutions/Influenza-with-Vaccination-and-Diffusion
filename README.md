@@ -12,7 +12,7 @@
 ## Problem Statement & Solution Overview:
 The original problem models the spread of influenza with vaccination and spatial diffusion, and was solved in the reference work using `the Method of Lines (MOL)`.
 , as required to implement two numerical solution schemes in addition to the book,
-### we implemented 3 numerical solutions:
+### we implemented 4 numerical solutions:
 
 - Explicit finite difference scheme
 
