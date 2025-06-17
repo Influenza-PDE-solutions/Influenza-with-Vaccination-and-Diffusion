@@ -56,7 +56,7 @@ For selected time points, we plotted the solution across the spatial domain 𝑥
 ![S](https://github.com/user-attachments/assets/b5dc99fc-a3a4-49c0-8d86-5e126849adc3)
 
 ### B) Deep learning 
-![Screenshot 2025-06-17 163643](https://github.com/user-attachments/assets/a05c6779-693c-4527-b2fe-d5a587e5ed27)
+![S with x](https://github.com/user-attachments/assets/ba4769b0-cf3f-4de4-b659-488f7e555428)
 
 
 ## 2. Temporal Evolution at a Fixed Location
