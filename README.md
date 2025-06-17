@@ -50,7 +50,7 @@ To assess the model behavior and accuracy, we visualized the predicted dynamics 
 
 ## 1. Spatiotemporal Profiles
 For selected time points, we plotted the solution across the spatial domain 𝑥.
-➤ This shows how each compartment evolves across space at different times.
+- This shows how each compartment evolves across space at different times.
 
 ### A) Numerical 
 ![S](https://github.com/user-attachments/assets/b5dc99fc-a3a4-49c0-8d86-5e126849adc3)
@@ -61,7 +61,7 @@ For selected time points, we plotted the solution across the spatial domain 𝑥
 
 ## 2. Temporal Evolution at a Fixed Location
 We fixed 𝑥=0 and plotted the solution over time.
-➤ This helps us observe how each variable changes over time at a specific spatial point.
+- This helps us observe how each variable changes over time at a specific spatial point.
 
 ### A) Numerical 
 ![S with t](https://github.com/user-attachments/assets/7e1966ff-0bda-4890-aea9-cd926a55b7b5)
