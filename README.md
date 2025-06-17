@@ -4,7 +4,7 @@
 - [Menna Ashraf](https://github.com/orgs/Influenza-PDE-solutions/people/Menaashraf)
 - [Nayera Sherif](https://github.com/Nayera5)
 - [Samar Hatem](https://github.com/samar04052004)
-- [Sara Sameh](https://github.com/orgs/Influenza-PDE-solutions/people/sarah012-210)
+- [Sarah Sameh](https://github.com/orgs/Influenza-PDE-solutions/people/sarah012-210)
 - [Shahd Ayman](https://github.com/Shahd-Ayman5)
 - [Nada Hassan](https://github.com/Nadahassan147)
 - [Nada Hesham](https://github.com/Nada-Hesham249)
