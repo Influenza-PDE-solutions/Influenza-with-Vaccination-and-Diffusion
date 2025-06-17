@@ -1,0 +1,26 @@
+{
+    "id": "76E6ADE6",
+    "path": "E:/R projects/flu test/flu_model/sol_Crank-Nicolson_method.R",
+    "project_path": "flu_model/sol_Crank-Nicolson_method.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1750143447735.0,
+    "source_on_save": false,
+    "relative_order": 9,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "201,20",
+        "scrollLine": "198"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1750135671,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1750135671,
+    "read_only": false,
+    "read_only_alternatives": []
+}

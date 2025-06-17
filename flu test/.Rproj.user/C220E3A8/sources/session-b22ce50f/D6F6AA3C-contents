@@ -1,0 +1,192 @@
+# ip = 1 - graphical (plotted) solutions vs x with
+# t as a parameter
+#
+# ip = 2 - graphical solutions vs t at specific x
+#
+ip=1;
+# Grid in x
+nx=61;xl=-3;xu=3;
+xg=seq(from=xl,to=xu,by=(xu-xl)/(nx-1));
+#
+# Grid in t
+if(ip==1){nout=11;t0=0;tf=60;}
+if(ip==2){nout=61;t0=0;tf=60;}
+# if(ip==2){nout=61;t0=0;tf=2000;}
+tout=seq(from=t0,to=tf,by=(tf-t0)/(nout-1));
+
+# PARAMETERS
+beta  <- 0.5140
+betae <- 0.250
+betai <- 1
+betav <- 0.9
+sigma <- 1/2
+gamma <- 1/5
+delta <- 1/365
+r     <- 1.140e-05
+kappa <- 1.857e-04
+alpha <- 9.30e-06
+theta <- 1/365
+phi   <- 1/20
+mu    <- 5.50e-08
+d1 <- 0.05
+d2 <- 0.05
+d3 <- 0.025
+d4 <- 0.001
+d5 <- 0.0
+
+# SPACE-TIME GRID
+xl <- -3; xu <- 3
+nx <- 61
+x <- seq(xl, xu, length.out = nx)
+dx <- x[2] - x[1]
+xg <- x
+
+t0 <- 0; tf <- 60
+dt <- 0.001
+nt <- floor((tf - t0)/dt) + 1
+time <- seq(t0, tf, length.out = nt)
+
+# INITIAL CONDITIONS
+S <- matrix(0, nx, nt)
+V <- matrix(0, nx, nt)
+E <- matrix(0, nx, nt)
+I <- matrix(0, nx, nt)
+R <- matrix(0, nx, nt)
+
+S[, 1] <- 0.86 * exp(-(x / 1.4)^2)
+V[, 1] <- 0.10 * exp(-(x / 1.4)^2)
+I[, 1] <- 0.04 * exp(-x^2)
+
+# Helper: 2nd-order FVM laplacian (zero-flux)
+fvm_laplacian <- function(u, dx) {
+  n <- length(u)
+  flux <- numeric(n)
+  for (i in 2:(n-1)) {
+    flux[i] <- (u[i+1] - 2*u[i] + u[i-1]) / dx^2
+  }
+  # Neumann BCs (zero flux): mirror boundary
+  flux[1] <- (u[2] - u[1]) / dx^2
+  flux[n] <- (u[n-1] - u[n]) / dx^2
+  return(flux)
+}
+
+# RHS for FVM system
+compute_rhs <- function(S, V, E, I, R, dx) {
+  N <- S + V + E + I + R
+  ES <- E * S
+  IS <- I * S
+  EV <- E * V
+  IV <- I * V
+  IE <- I * E
+  IR <- I * R
+  
+  S_xx <- fvm_laplacian(S, dx)
+  V_xx <- fvm_laplacian(V, dx)
+  E_xx <- fvm_laplacian(E, dx)
+  I_xx <- fvm_laplacian(I, dx)
+  R_xx <- fvm_laplacian(R, dx)
+  
+  dS <- -beta * betae * ES - beta * betai * IS + alpha * IS - phi * S - r * S + delta * R + theta * V + r + d1 * S_xx
+  dV <- -beta * betae * betav * EV - beta * betai * betav * IV + alpha * IV - r * V - theta * V + phi * S + d2 * V_xx
+  dE <- beta * betae * ES + beta * betai * IS + beta * betae * betav * EV + beta * betai * betav * IV + alpha * IE - (r + kappa + sigma) * E + d3 * E_xx
+  dI <- sigma * E - (r + alpha + gamma) * I + alpha * I^2 + d4 * I_xx
+  dR <- kappa * E + gamma * I - r * R - delta * R + alpha * IR + d5 * R_xx
+  
+  list(dS, dV, dE, dI, dR)
+}
+
+# RK4 TIME INTEGRATION
+for (t in 1:(nt - 1)) {
+  S_t <- S[, t]; V_t <- V[, t]; E_t <- E[, t]; I_t <- I[, t]; R_t <- R[, t]
+  
+  k1 <- compute_rhs(S_t, V_t, E_t, I_t, R_t, dx)
+  k2 <- compute_rhs(S_t + 0.5 * dt * k1[[1]],
+                    V_t + 0.5 * dt * k1[[2]],
+                    E_t + 0.5 * dt * k1[[3]],
+                    I_t + 0.5 * dt * k1[[4]],
+                    R_t + 0.5 * dt * k1[[5]], dx)
+  k3 <- compute_rhs(S_t + 0.5 * dt * k2[[1]],
+                    V_t + 0.5 * dt * k2[[2]],
+                    E_t + 0.5 * dt * k2[[3]],
+                    I_t + 0.5 * dt * k2[[4]],
+                    R_t + 0.5 * dt * k2[[5]], dx)
+  k4 <- compute_rhs(S_t + dt * k3[[1]],
+                    V_t + dt * k3[[2]],
+                    E_t + dt * k3[[3]],
+                    I_t + dt * k3[[4]],
+                    R_t + dt * k3[[5]], dx)
+  
+  S[, t+1] <- S_t + (dt/6) * (k1[[1]] + 2*k2[[1]] + 2*k3[[1]] + k4[[1]])
+  V[, t+1] <- V_t + (dt/6) * (k1[[2]] + 2*k2[[2]] + 2*k3[[2]] + k4[[2]])
+  E[, t+1] <- E_t + (dt/6) * (k1[[3]] + 2*k2[[3]] + 2*k3[[3]] + k4[[3]])
+  I[, t+1] <- I_t + (dt/6) * (k1[[4]] + 2*k2[[4]] + 2*k3[[4]] + k4[[4]])
+  R[, t+1] <- R_t + (dt/6) * (k1[[5]] + 2*k2[[5]] + 2*k3[[5]] + k4[[5]])
+}
+
+# PLOT
+ip <- 1  # ip=1: plot vs x; ip=2: plot vs t at x=0
+
+if (ip == 1) {
+  plot_1d <- function(var, name) {
+    idxs <- which(time %in% seq(0, 60, 6))
+    df <- melt(var[, idxs])
+    colnames(df) <- c("x_idx", "t_idx", "value")
+    df$x <- x[df$x_idx]
+    df$t <- time[idxs[df$t_idx]]
+    ggplot(df, aes(x = x, y = value, color = as.factor(t))) +
+      geom_line(linewidth = 1.2) +
+      labs(title = paste(name, "(x,t); t = 0,6,...,60"), x = "x", y = name, color = "t") +
+      theme_minimal()
+  }
+  
+  print(plot_1d(S, "S"))
+  print(plot_1d(V, "V"))
+  print(plot_1d(E, "E"))
+  print(plot_1d(I, "I"))
+  print(plot_1d(R, "R"))
+}
+
+if (ip == 2) {
+  center_idx <- which.min(abs(x - 0))
+  df <- data.frame(
+    time = rep(time, 5),
+    value = c(S[center_idx, ], V[center_idx, ], E[center_idx, ], I[center_idx, ], R[center_idx, ]),
+    variable = rep(c("S", "V", "E", "I", "R"), each = nt)
+  )
+  ggplot(df, aes(x = time, y = value, color = variable)) +
+    geom_line(linewidth = 1.2) +
+    labs(title = "S, V, E, I, R at x = 0", x = "Time", y = "Value", color = "Variable") +
+    theme_minimal()
+}
+
+# PREPARE DATA FOR DISPLAY
+tout <- c(0, 60)     # times to display
+nout <- length(tout)
+
+
+# Find time indices corresponding to tout
+it_index <- sapply(tout, function(tval) which.min(abs(time - tval)))
+
+# Extract solution slices for display
+S_xplot <- S[, it_index]
+V_xplot <- V[, it_index]
+E_xplot <- E[, it_index]
+I_xplot <- I[, it_index]
+R_xplot <- R[, it_index]
+
+# Display numerical solutions (for t = 0 and 60)
+if (ip == 1 || ip == 2) {
+  for (k in 1:nout) {
+    cat(sprintf("\n\n t = %5.1f", tout[k]))
+    cat(sprintf("\n%6s %6s %12s %12s", "x", "", "S(x,t)", "V(x,t)"))
+    cat(sprintf("\n%14s %12s %12s", "E(x,t)", "I(x,t)", "R(x,t)"))
+    
+    for (ix in 1:nx) {
+      cat(sprintf("\n%6.2f %12.5f %12.5f", xg[ix], S_xplot[ix, k], V_xplot[ix, k]))
+      cat(sprintf("\n%14.5f %12.5f %12.5f",
+                  E_xplot[ix, k], I_xplot[ix, k], R_xplot[ix, k]))
+    }
+  }
+}
+
+save(S_xplot, V_xplot, E_xplot, I_xplot, R_xplot, file = "FVM_results.RData")
