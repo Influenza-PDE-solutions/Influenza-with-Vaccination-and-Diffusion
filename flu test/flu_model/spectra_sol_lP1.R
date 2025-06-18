@@ -154,3 +154,27 @@ matplot(x, I_plot, type = "l", lty = 1, lwd = 2,
         main = "I(x,t); t = 0,6,...,60")
 legend("topright", legend = paste0("t=", times_to_plot),
        col = rainbow(length(times_to_plot)), lty = 1, lwd = 2, cex = 0.7)
+
+#plot with x equal 0 
+x0_index <- which.min(abs(x))
+
+S_xt0 <- out[, 1 + x0_index]
+V_xt0 <- out[, nx + x0_index]
+E_xt0 <- out[, 2 * nx + x0_index]
+I_xt0 <- out[, 3 * nx + x0_index]
+R_xt0 <- out[, 4 * nx + x0_index]
+
+plot(times, S_xt0, type = "l", col = "black", lwd = 2,
+     xlab = "t", ylab = "S(0,t)", main = "S at x = 0")
+
+plot(times, V_xt0, type = "l", col = "black", lwd = 2,
+     xlab = "t", ylab = "V(0,t)", main = "V at x = 0")
+
+plot(times, E_xt0, type = "l", col = "black", lwd = 2,
+     xlab = "t", ylab = "E(0,t)", main = "E at x = 0")
+
+plot(times, I_xt0, type = "l", col = "black", lwd = 2,
+     xlab = "t", ylab = "I(0,t)", main = "I at x = 0")
+
+plot(times, R_xt0, type = "l", col = "black", lwd = 2,
+     xlab = "t", ylab = "R(0,t)", main = "R at x = 0")
