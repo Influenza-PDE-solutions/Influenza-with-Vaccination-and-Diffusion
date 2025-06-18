@@ -1,0 +1,26 @@
+{
+    "id": "3FCDBD54",
+    "path": "E:/R projects/flu test/flu_model/sol_strang splitting_method.R",
+    "project_path": "flu_model/sol_strang splitting_method.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": true,
+    "created": 1750195382894.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "19,7",
+        "scrollLine": "4"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1750195344,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1750196573133,
+    "read_only": false,
+    "read_only_alternatives": []
+}
