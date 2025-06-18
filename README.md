@@ -26,12 +26,12 @@ After benchmarking the above classical numerical approaches,
 ### we developed a `Physics-Informed Neural Network (PINN)` model,
 to solve the same system in a deep learning framework, and compared its performance and accuracy against the traditional methods and the reference solution.
 
-PINNs integrate the physical laws of the system—represented by differential equations—directly into the loss function of a neural network. This allows us to train the model with no labeled data, relying instead on the structure of the equations.
+PINNs integrate the physical laws of the system—represented by differential equations—directly into the loss function of a neural network.
 
 Inputs:
 - The network takes spatial and temporal inputs (x, t).
 - 6 hidden layers with each 256 nueron
-
+- labled data from the reference solution (20 samples)
 Outputs:
 - The model outputs the predicted values for each of the five variables: S(x,t), V(x,t), E(x,t), I(x,t), R(x,t).
 
