@@ -32,6 +32,7 @@ Inputs:
 - The network takes spatial and temporal inputs (x, t).
 - 6 hidden layers with each 256 nueron
 - labled data from the reference solution (20 samples)
+  
 Outputs:
 - The model outputs the predicted values for each of the five variables: S(x,t), V(x,t), E(x,t), I(x,t), R(x,t).
 
