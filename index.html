@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
+  <title>Influenza SVEIR Model</title>
+  <style>
+  body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: #f9fafb;
+    color: #1f2937;
+    line-height: 1.75;
+    max-width: 960px;
+    margin: auto;
+    padding: 2rem;
+  }
+
+  h1, h2, h3, h4 {
+    color: #0f172a;
+    margin-top: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.3rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+  }
+
+  h4 {
+    font-size: 1.1rem;
+    color: #334155;
+  }
+
+  p, li {
+    font-size: 1rem;
+    text-align: justify;
+    margin: 0.6rem 0;
+  }
+
+  ul, ol {
+    padding-left: 1.4rem;
+    margin: 1rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.2rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+
+  th {
+    background-color: #e2e8f0;
+    font-weight: bold;
+  }
+
+  code {
+    background-color: #f3f4f6;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 0.95rem;
+  }
+
+  pre {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: Consolas, monospace;
+    font-size: 0.95rem;
+  }
+
+  blockquote {
+    margin: 1rem 0;
+    padding: 0.8rem 1rem;
+    background-color: #f1f5f9;
+    border-left: 4px solid #94a3b8;
+    font-style: italic;
+    color: #475569;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #d1d5db;
+    margin: 2rem 0;
+  }
+
+  /* For equations to stand out */
+  .MathJax {
+    font-size: 110% !important;
+  }
+
+  .image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* was 280px */
+  gap: 2rem;
+  margin-top: 2rem;
+  justify-items: center; /* centers items in each column */
+}
+
+.image-gallery figure {
+  background-color: #ffffff;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  text-align: center;
+  max-width: 550px; /* Optional: limit for large screens */
+  width: 100%;
+}
+
+.image-gallery img {
+  width: 100%;
+  height: auto;
+  max-height: 600px; /* Optional: cap vertical size */
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.image-gallery figcaption {
+  font-size: 1rem;
+  color: #4b5563;
+  margin-top: 0.75rem;
+}
+
+</style>
+
+  <script type="text/javascript"
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+</head>
+<body>
+
+  <h1>🦠 Influenza SVEIR PDE Model</h1>
+
+  <h2>Abstract</h2>
+  <p>
+    This report addresses the numerical solution of a one-dimensional partial differential equation (PDE) model describing the spatial and temporal dynamics of an influenza epidemic with vaccination. The model follows the SVEIR compartmental structure, representing the populations of Susceptible, Vaccinated, Exposed, Infected, and Recovered individuals as functions of both space and time. Originally solved using the Method of Lines (MOL), we extend the analysis by applying a range of other methods, including several finite difference schemes, a Strang splitting method, finite volume method, spectral method and a deep learning approach. The goal is to compare the accuracy and efficiency of each method in modeling influenza spread with vaccination and diffusion.
+  </p>
+
+  <h2>I. Introduction</h2>
+  <p>
+    Influenza transmission is governed by multiple biological processes including infection, recovery, immunity loss, and vaccination. While classical compartmental models typically address only the temporal dynamics of disease spread, spatial heterogeneity—such as population movement and localized outbreaks—can significantly influence epidemic behavior. To capture these effects, this work models influenza using a spatiotemporal SVEIR framework, represented by a system of coupled nonlinear partial differential equations (PDEs). The model tracks the densities of Susceptible (S), Vaccinated (V), Exposed (E), Infected (I), and Recovered (R) individuals as functions of both time and space.
+  </p>
+  <p>
+    Originally solved using the Method of Lines (MOL), which converts the PDE system into ODEs by discretizing space, the model provides insight into how vaccination and diffusion influence epidemic spread. In this project, we extend the analysis by comparing six approaches: the Explicit Finite Difference Method, the Crank–Nicolson Method, the Strang Splitting Method, Finite Volume Method, Spectral Method and a Deep Learning model trained to approximate PDE solutions.
+  </p>
+
+  <h2>II. Literature Review</h2>
+  <p>
+    Recent studies have advanced epidemic modeling by incorporating spatial and temporal effects. Chen and Xu (2019) proposed a two-strain influenza model with vaccines, including spatial diffusion and time delays to reflect incubation and movement [1]. They analyzed equilibrium stability using Lyapunov methods and confirmed results numerically. Jang et al. (2020) addressed optimal vaccine allocation in a spatial SIR model, using constrained optimization to minimize infections and costs, highlighting the impact of spatial heterogeneity [2]. Building on these works, we explore numerical and data-driven methods for solving a spatial SVEIR influenza model with vaccination and diffusion.
+  </p>
+
+  <h2>III. Model Formulation</h2>
+
+<p>
+  This study models the spread of influenza using a one-dimensional reaction–diffusion system based on the SVEIR framework. The model captures both temporal and spatial dynamics of disease transmission and vaccination. Five state variables are tracked as functions of space \( x \in [-3, 3] \) and time \( t \geq 0 \):
+</p>
+
+<ul>
+  <li><strong>S(x, t):</strong> Susceptible population</li>
+  <li><strong>V(x, t):</strong> Vaccinated population</li>
+  <li><strong>E(x, t):</strong> Exposed (latent) population</li>
+  <li><strong>I(x, t):</strong> Infected population</li>
+  <li><strong>R(x, t):</strong> Recovered population</li>
+</ul>
+
+<h3>PDE System</h3>
+
+<p>The system is governed by nonlinear partial differential equations representing infection, recovery, immunity loss, and diffusion:</p>
+
+<p>
+  $$
+  \frac{\partial S}{\partial t} = -\beta\beta_E E S - \beta\beta_I I S + \alpha I S - \phi S - rS + \delta R + \theta V + r + d_1 \frac{\partial^2 S}{\partial x^2}
+  $$
+</p>
+
+<p>
+  $$
+  \frac{\partial V}{\partial t} = -\beta\beta_E\beta_V E V - \beta\beta_I\beta_V I V + \alpha I V - rV - \theta V + \phi S + d_2 \frac{\partial^2 V}{\partial x^2}
+  $$
+</p>
+
+<p>
+  $$
+  \frac{\partial E}{\partial t} = \beta\beta_E E S + \beta\beta_I I S + \beta\beta_E\beta_V E V + \beta\beta_I\beta_V I V + \alpha I E - (r + \kappa + \sigma) E + d_3 \frac{\partial^2 E}{\partial x^2}
+  $$
+</p>
+
+<p>
+  $$
+  \frac{\partial I}{\partial t} = \sigma E - (r + \alpha + \gamma) I + \alpha I^2 + d_4 \frac{\partial^2 I}{\partial x^2}
+  $$
+</p>
+
+<p>
+  $$
+  \frac{\partial R}{\partial t} = \kappa E + \gamma I - rR - \delta R + \alpha I R + d_5 \frac{\partial^2 R}{\partial x^2}
+  $$
+</p>
+
+<h3>Boundary and Initial Conditions</h3>
+
+<p>
+  Neumann (no-flux) boundary conditions are applied at \( x = \pm 3 \) to simulate a closed domain:
+</p>
+
+<p>
+  $$
+  \left. \frac{\partial U}{\partial x} \right|_{x = -3}^{x = 3} = 0, \quad \text{for } U = S, V, E, I, R
+  $$
+</p>
+
+<p>Initial conditions are defined as:</p>
+
+<p>
+  $$
+  \begin{align*}
+  S(x, 0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+  V(x, 0) &= 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+  E(x, 0) &= 0, \quad I(x, 0) = 0.04 \exp(-x^2), \quad R(x, 0) = 0
+  \end{align*}
+  $$
+</p>
+
+<h3>Parameter Values</h3>
+
+<table border="1" cellspacing="0" cellpadding="6">
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Description</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>&beta;</td><td>Contact rate</td><td>0.5140</td></tr>
+    <tr><td>&beta;<sub>E</sub></td><td>Infectiousness of exposed</td><td>0.25</td></tr>
+    <tr><td>&beta;<sub>I</sub></td><td>Infectiousness of infected</td><td>1</td></tr>
+    <tr><td>&beta;<sub>V</sub></td><td>Vaccine protection factor</td><td>0.9</td></tr>
+    <tr><td>&sigma;<sup>-1</sup></td><td>Latent period (days)</td><td>2</td></tr>
+    <tr><td>&gamma;<sup>-1</sup></td><td>Recovery period (days)</td><td>5</td></tr>
+    <tr><td>&delta;<sup>-1</sup></td><td>Immunity loss duration (days)</td><td>365</td></tr>
+    <tr><td>r</td><td>Birthrate</td><td>7.14 &times; 10<sup>-5</sup></td></tr>
+    <tr><td>&alpha;</td><td>Flu-induced mortality rate</td><td>9.3 &times; 10<sup>-6</sup></td></tr>
+    <tr><td>&kappa;</td><td>Latent recovery rate</td><td>1.857 &times; 10<sup>-4</sup></td></tr>
+    <tr><td>&theta;<sup>-1</sup></td><td>Vaccine immunity duration (days)</td><td>365</td></tr>
+    <tr><td>&phi;</td><td>Vaccination rate</td><td>0.05</td></tr>
+    <tr><td>d<sub>1</sub>, d<sub>2</sub></td><td>Diffusivity for S, V</td><td>0.05</td></tr>
+    <tr><td>d<sub>3</sub></td><td>Diffusivity for E</td><td>0.025</td></tr>
+    <tr><td>d<sub>4</sub></td><td>Diffusivity for I</td><td>0.001</td></tr>
+    <tr><td>d<sub>5</sub></td><td>Diffusivity for R</td><td>0</td></tr>
+  </tbody>
+</table>
+<h2>IV. Numerical Solutions</h2>
+<p>This section presents the various numerical techniques applied to solve the spatiotemporal SVEIR model for influenza transmission.</p>
+
+<h3>Crank–Nicolson Numerical Method</h3>
+
+<p>
+  We used a semi-implicit Crank–Nicolson method to solve the SVEIR PDE model. Diffusion terms are treated implicitly, while nonlinear reaction terms are computed explicitly. This requires solving a tridiagonal system for each compartment at every time step.
+</p>
+
+<h4>Spatial and Temporal Grids</h4>
+<p>
+  The spatial domain is defined as \( x \in [x_l, x_u] \) and divided into \( n_x \) uniform grid points:
+</p>
+<p>
+  $$
+  \Delta x = \frac{x_u - x_l}{n_x - 1}, \quad \Delta x^2 = (\Delta x)^2
+  $$
+</p>
+
+<h4>Initial Conditions</h4>
+<p>
+  $$
+  \begin{aligned}
+  S(x, 0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+  V(x, 0) &= 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+  E(x, 0) &= 0, \quad I(x, 0) = 0.04 \exp(-x^2), \quad R(x, 0) = 0
+  \end{aligned}
+  $$
+</p>
+
+<h4>Crank–Nicolson Matrix Construction</h4>
+<p>
+  For each compartment, define a diffusion coefficient \( d_i \) (e.g., \( d_1 = 0.05 \) for \( S \)).  
+  Compute:
+</p>
+<p>
+  $$
+  \lambda = \frac{d_i \, \Delta t}{2 \Delta x^2}
+  $$
+</p>
+<p>
+  Then construct the tridiagonal matrix \( A \) as:
+</p>
+<p>
+  $$
+  A = \text{diag}(1 + 2\lambda) + \text{diag}(-\lambda, 1) + \text{diag}(-\lambda, -1)
+  $$
+</p>
+
+<h4>Time-Stepping Scheme</h4>
+<p>For each time step \( k = 1 \) to \( N_t - 1 \), extract the current state vectors \( S^k, V^k, E^k, I^k, R^k \), and compute the nonlinear terms (reaction terms):</p>
+
+<p>
+  $$
+  \begin{aligned}
+  F_S &= -\beta \beta_E E^k S^k - \beta \beta_I I^k S^k + \alpha I^k S^k - \phi S^k - r S^k + \delta R^k + \theta V^k \\
+  F_V &= -\beta \beta_E \beta_V E^k V^k - \beta \beta_I \beta_V I^k V^k + \alpha I^k V^k - r V^k - \theta V^k + \phi S^k \\
+  F_E &= \beta \beta_E E^k S^k + \beta \beta_I I^k S^k + \beta \beta_E \beta_V E^k V^k + \beta \beta_I \beta_V I^k V^k + \alpha E^k I^k - (r + \kappa + \sigma) E^k \\
+  F_I &= \sigma E^k - (r + \alpha + \gamma) I^k + \alpha (I^k)^2 \\
+  F_R &= \kappa E^k + \gamma I^k - r R^k - \delta R^k + \alpha I^k R^k
+  \end{aligned}
+  $$
+</p>
+
+<h4>Update Step</h4>
+<p>
+  Update each compartment using the Crank–Nicolson scheme:
+</p>
+<p>
+  $$
+  U^{k+1} = A^{-1} \left(U^k + \Delta t \cdot F_U\right), \quad \text{for } U \in \{S, V, E, I, R\}
+  $$
+</p>
+
+<h4>Remarks</h4>
+<p>
+  This method is efficient due to the tridiagonal nature of matrix \( A \), allowing fast solutions. Explicit handling of the nonlinear terms avoids solving a nonlinear system, but may slightly reduce accuracy. Overall, Crank–Nicolson offers a good balance between stability and computational cost for reaction–diffusion models.
+</p>
+<h3>Explicit Finite Difference Method</h3>
+
+<p>
+To solve the spatiotemporal SVEIR model numerically, we first implemented the Explicit Forward Euler Method, a basic time-stepping scheme. This method discretizes both time and space and advances the solution iteratively. It is easy to implement but conditionally stable, requiring careful choice of time step size.
+</p>
+
+<h4>Space–Time Grid</h4>
+<p>
+The spatial domain is defined as \( x \in [x_l, x_u] \) and divided into \( n_x \) uniform grid points:
+</p>
+<p>
+$$
+x_i = x_l + (i-1)\Delta x, \quad \Delta x = \frac{x_u - x_l}{n_x - 1}, \quad i = 1, 2, \ldots, n_x
+$$
+<p>
+Time is discretized using a uniform time step \( \Delta t \), up to a final time \( t_f \):
+</p>
+<p>
+$$
+t_n = t_0 + n\Delta t, \quad n = 0, 1, 2, \ldots, N_t
+$$
+
+<h4>Initial Conditions</h4>
+<p>
+$$
+\begin{aligned}
+S(x, 0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+V(x, 0) &= 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+E(x, 0) &= 0, \quad I(x, 0) = 0.04 \exp(-x^2), \quad R(x, 0) = 0
+\end{aligned}
+$$
+</p>
+
+<h4>Laplacian Approximation</h4>
+<p>
+The second derivative in space is approximated using central differences:
+</p>
+<p>
+$$
+\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{(\Delta x)^2}
+$$
+<p>
+This approximation is applied to each compartment to capture diffusion effects.
+</p>
+
+<h4>Explicit Update Equations</h4>
+<p>
+At each time step \( t_n \), we compute the solution at \( t_{n+1} \) using the Forward Euler update:
+</p>
+
+<p>
+$$
+\begin{aligned}
+S_i^{n+1} &= S_i^n + \Delta t \left( -\beta\beta_E E_i^n S_i^n - \beta\beta_I I_i^n S_i^n + \alpha I_i^n S_i^n - \phi S_i^n - r S_i^n + \delta R_i^n + \theta V_i^n + r + d_1 \nabla^2 S_i^n \right) \\
+V_i^{n+1} &= V_i^n + \Delta t \left( -\beta\beta_E\beta_V E_i^n V_i^n - \beta\beta_I\beta_V I_i^n V_i^n + \alpha I_i^n V_i^n - r V_i^n - \theta V_i^n + \phi S_i^n + d_2 \nabla^2 V_i^n \right) \\
+E_i^{n+1} &= E_i^n + \Delta t \left( \beta\beta_E E_i^n S_i^n + \beta\beta_I I_i^n S_i^n + \beta\beta_E\beta_V E_i^n V_i^n + \beta\beta_I\beta_V I_i^n V_i^n + \alpha I_i^n E_i^n - (r + \kappa + \sigma) E_i^n + d_3 \nabla^2 E_i^n \right) \\
+I_i^{n+1} &= I_i^n + \Delta t \left( \sigma E_i^n - (r + \alpha + \gamma) I_i^n + \alpha (I_i^n)^2 + d_4 \nabla^2 I_i^n \right) \\
+R_i^{n+1} &= R_i^n + \Delta t \left( \kappa E_i^n + \gamma I_i^n - r R_i^n - \delta R_i^n + \alpha I_i^n R_i^n + d_5 \nabla^2 R_i^n \right)
+\end{aligned}
+$$
+</p>
+
+<p>
+Here, \( \nabla^2 U_i^n \) represents the discrete Laplacian for variable \( U \) at grid point \( i \) and time \( n \).
+</p>
+
+<h4>Stability Considerations</h4>
+<p>
+This method is conditionally stable. The stability is especially sensitive to the diffusion terms, requiring a sufficiently small \( \Delta t \) based on the spatial resolution \( \Delta x \) and diffusivity values \( d_j \). While computationally efficient for small time intervals and moderate grid sizes, it can become unstable if the time step is too large.
+</p>
+<h3>Strang Splitting Method</h3>
+
+<p>
+This method decouples the reaction and diffusion components of the system. This operator splitting technique enables each physical process—reaction and diffusion—to be handled using the most suitable numerical method, enhancing both stability and efficiency.
+</p>
+
+<h4>Governing Equations</h4>
+
+<p>
+Each equation includes nonlinear reaction terms and spatial diffusion:
+</p>
+
+<p>
+$$
+\frac{\partial u_i}{\partial t} = \text{Reaction}_i(u_1, u_2, u_3, u_4, u_5) + d_i \frac{\partial^2 u_i}{\partial x^2}, \quad i = 1, 2, \ldots, 5
+$$
+</p>
+
+<p>
+where \( u_i \in \{S, V, E, I, R\} \), and \( d_i \) is the diffusion coefficient for each compartment.
+</p>
+
+<h4>Spatial and Temporal Discretization</h4>
+
+<p>
+The spatial domain is defined as \( x \in [x_l, x_u] \) and discretized into \( n_x \) grid points:
+</p>
+
+<p>
+$$
+x_i = x_l + (i - 1)\Delta x, \quad \Delta x = \frac{x_u - x_l}{n_x - 1}, \quad i = 1, 2, \ldots, n_x
+$$
+</p>
+
+<p>
+Time is discretized similarly, using a uniform time step \( \Delta t \), up to a final time \( t_f \):
+</p>
+
+<p>
+$$
+t_n = t_0 + n \Delta t, \quad n = 0, 1, 2, \ldots, N_t
+$$
+</p>
+
+<h4>Initial Conditions</h4>
+
+<p>
+The variable initializations are identical to those used in the Crank–Nicolson method, following the same setup as the original model:
+</p>
+
+<p>
+$$
+\begin{aligned}
+S(x, 0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+V(x, 0) &= 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+E(x, 0) &= 0, \quad I(x, 0) = 0.04 \exp(-x^2), \quad R(x, 0) = 0
+\end{aligned}
+$$
+</p>
+
+<h4>Splitting Strategy</h4>
+
+<p>
+Each full time step \( \Delta t \) is advanced using the following symmetric sequence:
+</p>
+
+<h5>Step 1: Half-Step Reaction</h5>
+
+<p>
+The reaction terms are integrated using a classical fourth-order Runge–Kutta method over a half-step \( \Delta t / 2 \).
+</p>
+
+<h5>Step 2: Full-Step Diffusion</h5>
+
+<p>
+The diffusion terms are updated using explicit forward Euler with substeps. The second spatial derivative is approximated using central differences:
+</p>
+
+<p>
+$$
+\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{(\Delta x)^2}
+$$
+</p>
+
+<p>
+The diffusion is computed with 20 substeps of size:
+</p>
+
+<p>
+$$
+\Delta t_{\text{sub}} = \frac{\Delta t}{20}
+$$
+</p>
+
+<h5>Step 3: Half-Step Reaction</h5>
+
+<p>
+A second Runge–Kutta integration is performed over the remaining half-step to complete the time advancement.
+</p>
+
+<h4>Remarks</h4>
+
+<p>
+This method allows flexibility by using different solvers suited to each component (reaction vs. diffusion). It is well-suited for nonlinear, spatially extended epidemic models, as it balances accuracy, speed, and implementation simplicity.
+</p>
+
+<h3>Finite Volume Method (FVM) with RK4</h3>
+
+<h4>1. Overview</h4>
+<p>
+We solve the SVEIR reaction–diffusion PDE model for influenza spread using the <strong>Finite Volume Method (FVM)</strong> for spatial discretization. This method conserves flux across control volumes and handles diffusion and reaction terms efficiently. Time integration is performed using the classical fourth-order Runge–Kutta method (RK4).
+</p>
+
+<h4>2. SVEIR PDE Model</h4>
+<p>
+The equations for the five compartments are:
+</p>
+
+<p>
+\[
+\begin{aligned}
+\frac{\partial S}{\partial t} &= -\beta\beta_e E S - \beta\beta_i I S + \alpha I S - \phi S - rS + \delta R + \theta V + r + d_1 \nabla^2 S \\
+\frac{\partial V}{\partial t} &= -\beta\beta_e\beta_v E V - \beta\beta_i\beta_v I V + \alpha I V - rV - \theta V + \phi S + d_2 \nabla^2 V \\
+\frac{\partial E}{\partial t} &= \beta\beta_e E S + \beta\beta_i I S + \beta\beta_e\beta_v E V + \beta\beta_i\beta_v I V + \alpha I E - (r + \kappa + \sigma) E + d_3 \nabla^2 E \\
+\frac{\partial I}{\partial t} &= \sigma E - (r + \alpha + \gamma) I + \alpha I^2 + d_4 \nabla^2 I \\
+\frac{\partial R}{\partial t} &= \kappa E + \gamma I - rR - \delta R + \alpha I R + d_5 \nabla^2 R
+\end{aligned}
+\]
+</p>
+
+<p>
+Here, \( \nabla^2 u \) represents the Laplacian term, approximated using the FVM.
+</p>
+
+<h4>3. Space–Time Grid</h4>
+<p>
+The spatial domain \( x \in [x_l, x_u] \) is divided into \( n_x \) uniform cells:
+</p>
+<p>
+\[
+x_i = x_l + (i-1)\Delta x, \quad \Delta x = \frac{x_u - x_l}{n_x - 1}
+\]
+</p>
+<p>
+Time is discretized as:
+</p>
+<p>
+\[
+t_n = t_0 + n\Delta t, \quad n = 0,1,\dots,N_t
+\]
+</p>
+
+<h4>4. Initial Conditions</h4>
+<p>
+\[
+\begin{aligned}
+S(x,0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \quad
+V(x,0) = 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+I(x,0) &= 0.04 \exp(-x^2), \quad
+E(x,0) = 0, \quad R(x,0) = 0
+\end{aligned}
+\]
+</p>
+
+<h4>5. Laplacian Approximation (FVM)</h4>
+<p>
+The second spatial derivative is approximated as:
+</p>
+<p>
+\[
+\nabla^2 u_i \approx \frac{u_{i+1} - 2u_i + u_{i-1}}{(\Delta x)^2}
+\]
+</p>
+
+<p>
+Boundary conditions (Neumann, zero-flux):
+</p>
+<p>
+\[
+\nabla^2 u_1 \approx \frac{u_2 - u_1}{(\Delta x)^2}, \quad \nabla^2 u_n \approx \frac{u_{n-1} - u_n}{(\Delta x)^2}
+\]
+</p>
+
+<h4>6. Time Integration (RK4)</h4>
+<p>
+We use RK4 to integrate the system over time:
+</p>
+<p>
+\[
+y^{n+1} = y^n + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)
+\]
+</p>
+<p>
+Each stage \( k \) is computed using the discretized RHS of the PDE, including diffusion (FVM) and reaction terms.
+</p>
+
+<h4>7. Update Equations</h4>
+<p>
+At each grid point \( i \) and time step \( n \):
+</p>
+<p>
+\[
+\begin{aligned}
+S_i^{n+1} &= S_i^n + \Delta t \cdot f_S(S^n, V^n, E^n, I^n, R^n) \\
+V_i^{n+1} &= V_i^n + \Delta t \cdot f_V(S^n, V^n, E^n, I^n, R^n) \\
+E_i^{n+1} &= E_i^n + \Delta t \cdot f_E(S^n, V^n, E^n, I^n, R^n) \\
+I_i^{n+1} &= I_i^n + \Delta t \cdot f_I(S^n, V^n, E^n, I^n, R^n) \\
+R_i^{n+1} &= R_i^n + \Delta t \cdot f_R(S^n, V^n, E^n, I^n, R^n)
+\end{aligned}
+\]
+</p>
+<p>
+Where each \( f \) function includes both reaction and diffusion terms.
+</p>
+
+<h4>8. Visualization</h4>
+<p>
+We visualize the results:
+</p>
+<ul>
+  <li>As functions of space at times \( t = 0, 6, 12, ..., 60 \)</li>
+  <li>As functions of time at the spatial midpoint \( x = 0 \)</li>
+</ul>
+
+<h4>9. Conclusion</h4>
+<p>
+The Finite Volume Method offers a conservative and accurate framework for simulating disease spread with spatial heterogeneity. Combined with the RK4 integrator, it yields reliable solutions to the nonlinear spatiotemporal SVEIR model.
+</p>
+
+<h3>Spectral Method (DCT-Based) with <code>lsoda</code></h3>
+
+<h4>1. Overview</h4>
+<p>
+We present a numerical solution to the SVEIR reaction–diffusion model for influenza using a <strong>spectral method</strong>. The model consists of five coupled partial differential equations (PDEs) for the compartments: Susceptible (S), Vaccinated (V), Exposed (E), Infected (I), and Recovered (R). We use the <strong>Discrete Cosine Transform (DCT)</strong> to approximate spatial derivatives, while time integration is performed using the adaptive <code>lsoda</code> solver.
+</p>
+
+<h4>2. SVEIR Spectral PDE Model</h4>
+<p>
+The governing PDEs with spectral Laplacians are:
+</p>
+<p>
+\[
+\begin{aligned}
+\frac{\partial S}{\partial t} &= -\beta\beta_e E S - \beta\beta_i I S + \alpha I S - \phi S - rS + \delta R + \theta V + r + d_1 L(S) \\
+\frac{\partial V}{\partial t} &= -\beta\beta_e\beta_v E V - \beta\beta_i\beta_v I V + \alpha I V - rV - \theta V + \phi S + d_2 L(V) \\
+\frac{\partial E}{\partial t} &= \beta\beta_e E S + \beta\beta_i I S + \beta\beta_e\beta_v E V + \beta\beta_i\beta_v I V + \alpha I E - (r + \kappa + \sigma) E + d_3 L(E) \\
+\frac{\partial I}{\partial t} &= \sigma E - (r + \alpha + \gamma) I + \alpha I^2 + d_4 L(I) \\
+\frac{\partial R}{\partial t} &= \kappa E + \gamma I - rR - \delta R + \alpha I R + d_5 L(R)
+\end{aligned}
+\]
+</p>
+<p>
+Here, \( L(u) \) denotes the Laplacian computed via the spectral approximation:
+</p>
+<p>
+\[
+L(u) \approx \text{IDCT}\left(-\left(\frac{k\pi}{2L}\right)^2 \cdot \text{DCT}(u)\right)
+\]
+</p>
+<p>
+where \( k = 0, 1, \dots, N-1 \) are the spectral modes, and \( L = \frac{x_u - x_l}{2} \) is half the spatial domain width.
+</p>
+
+<h4>3. Space–Time Grid</h4>
+<p>
+The spatial domain \( x \in [x_l, x_u] \) is uniformly divided into \( n_x \) grid points:
+</p>
+<p>
+\[
+x_i = x_l + (i - 1)\Delta x, \quad \Delta x = \frac{x_u - x_l}{n_x - 1}, \quad i = 1, \dots, n_x
+\]
+</p>
+<p>
+Time domain: \( t_n = t_0 + n\Delta t \), solved adaptively at selected output points using <code>lsoda</code>.
+</p>
+
+<h4>4. Initial Conditions</h4>
+<p>
+\[
+\begin{aligned}
+S(x,0) &= 0.86 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \quad
+V(x,0) = 0.10 \exp\left(-\left(\frac{x}{1.4}\right)^2\right), \\
+I(x,0) &= 0.04 \exp(-x^2), \quad
+E(x,0) = 0, \quad R(x,0) = 0
+\end{aligned}
+\]
+</p>
+
+<h4>5. Spectral Approximation Steps</h4>
+<ol>
+  <li>Apply the DCT: \( \hat{u}_k = \text{DCT}(u) \)</li>
+  <li>Scale in frequency domain: \( \hat{u}_{xx,k} = -\left(\frac{k\pi}{2L}\right)^2 \hat{u}_k \)</li>
+  <li>Apply the inverse DCT: \( u_{xx} = \text{IDCT}(\hat{u}_{xx,k}) \)</li>
+</ol>
+<p>
+This yields high-accuracy approximations under Neumann (zero-flux) boundary conditions.
+</p>
+
+<h4>6. Time Integration</h4>
+<p>
+After transforming the PDE system into a system of ODEs via the DCT-based Laplacian, we solve it using <code>lsoda</code> from the <code>deSolve</code> R package. This solver automatically switches between stiff and non-stiff methods, offering both stability and speed.
+</p>
+
+<h4>7. Output</h4>
+<p>
+Solutions \( S(x,t), V(x,t), E(x,t), I(x,t), R(x,t) \) are reconstructed for:
+</p>
+<ul>
+  <li>Fixed time snapshots \( t = 0, 6, \dots, 60 \)</li>
+  <li>Fixed spatial point (e.g., \( x = 0 \)) across time</li>
+</ul>
+
+<h4>8. Conclusion</h4>
+<p>
+The spectral method delivers highly accurate spatial approximations for smooth problems. When combined with robust adaptive time-stepping (like <code>lsoda</code>), it efficiently simulates the dynamics of influenza spread in a spatially structured population.
+</p>
+
+
+<h2>V. Deep Learning Solution</h2>
+
+<h3>A. Introduction</h3>
+<p>
+This part of the project uses Deep Learning (DL) techniques, specifically <strong>Physics-Informed Neural Networks (PINNs)</strong>, to solve a system of partial differential equations (PDEs) modeling the spread of influenza with vaccination and spatial diffusion. Unlike traditional numerical methods (such as Finite Difference or Finite Element), DL-based methods do not require mesh generation or discretization and can generalize across space–time domains.
+</p>
+
+<h3>B. What Deep Learning Is Solving</h3>
+<p>
+The neural network learns to approximate the five functions:
+</p>
+<p>
+$$
+S(x, t), \quad V(x, t), \quad E(x, t), \quad I(x, t), \quad R(x, t)
+$$
+<p>
+which represent the densities of susceptible, vaccinated, exposed, infected, and recovered individuals, respectively. The network is trained to minimize the mismatch in PDE residuals and satisfy initial and boundary conditions.
+</p>
+
+<h3>C. Data and Input Representation</h3>
+<ul>
+  <li>Input space: a 2D grid of points \((x, t)\) generated using PyTorch functions like <code>torch.linspace</code> and <code>meshgrid</code>.</li>
+  <li>Each network input is a 2D vector \([x, t]\).</li>
+  <li>Only 20 labeled points from the true numerical solution are used to guide training.</li>
+</ul>
+
+<h3>D. The Neural Network (PINN)</h3>
+<ul>
+  <li><strong>Inputs:</strong> \( x \) and \( t \)</li>
+  <li><strong>Hidden layers:</strong> Fully connected (dense) layers with activation functions like Tanh, Sigmoid, or ReLU</li>
+  <li><strong>Output:</strong> 5 values — \( [S, V, E, I, R] \)</li>
+</ul>
+
+<p>The network is trained to satisfy the following conditions:</p>
+<ol>
+  <li>The PDE system (i.e., the equations governing disease spread)</li>
+  <li>Initial conditions (population values at \( t = 0 \))</li>
+  <li>Boundary conditions (Neumann/no-flux: \( \frac{\partial U}{\partial x} = 0 \))</li>
+  <li>Supervision on 20 data points to improve convergence</li>
+</ol>
+
+<h3>E. Loss Function</h3>
+<p>
+The total loss is composed of multiple mean squared error (MSE) terms:
+</p>
+<p>
+$$
+\text{Total Loss} = \text{MSE}_{\text{PDE}} + \text{MSE}_{\text{IC}} + \text{MSE}_{\text{BC}} + \text{MSE}_{\text{Data}}
+$$
+</p>
+<ul>
+  <li><strong>\( \text{MSE}_{\text{PDE}} \)</strong>: Residuals of the PDEs (physics loss)</li>
+  <li><strong>\( \text{MSE}_{\text{IC}} \)</strong>: Deviation from initial conditions</li>
+  <li><strong>\( \text{MSE}_{\text{BC}} \)</strong>: Enforcing zero-flux boundary condition</li>
+  <li><strong>\( \text{MSE}_{\text{Data}} \)</strong>: Error on known true points</li>
+</ul>
+
+<h3>F. Optimization Strategy</h3>
+<p>
+Training is performed in two stages:
+</p>
+<ol>
+  <li><strong>Stage 1:</strong> Adam optimizer (adaptive, fast convergence)</li>
+  <li><strong>Stage 2:</strong> LBFGS optimizer (second-order, fine-tunes weights for better precision)</li>
+</ol>
+
+<h3>G. Challenges and Notes</h3>
+<p>
+While PINNs offer flexibility, they also face limitations. Some compartments—particularly \( I(x, t) \) and \( E(x, t) \)—may exhibit inaccuracies or oscillations. This can be caused by:
+</p>
+<ul>
+  <li>Imbalanced weights among loss terms</li>
+  <li>Insufficient model complexity (too few neurons/layers)</li>
+  <li>Inaccurate gradients or poor initialization</li>
+</ul>
+<p>
+Adjusting weight terms and increasing the number of training data points can improve performance. Regularization and adaptive learning rates may also help stabilize learning.
+</p>
+
+<h2>VI. Results</h2>
+
+<p>
+This section presents and compares the spatial and temporal behavior of the <strong>Susceptible (S)</strong> and <strong>Recovered (R)</strong> populations under different numerical methods. The reference solution obtained using the <em>Method of Lines (MOL)</em> serves as a benchmark for comparison against the <strong>Crank–Nicolson</strong>, <strong>Strang Splitting</strong>, and <strong>Deep Learning</strong> approaches.
+</p>
+
+<h3>A. Numerical Results</h3>
+
+<h4>1. Reference Solution: Method of Lines</h4>
+
+<p>
+The Method of Lines discretizes space and solves the resulting system of ODEs using standard time integration techniques. The following plot illustrates the spatial distribution of the Susceptible and Recovered populations at regular time steps.
+</p>
+
+<div class="image-gallery">
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot01.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t):</strong> The spatial profile shows a decaying Gaussian shape due to vaccination and infection.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot02.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t):</strong> Increases in height over time, stabilizing as the susceptible pool declines.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot03.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t):</strong> Peaks early and fades, reflecting the short incubation period.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot04.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t):</strong> Peaks around the middle of the simulation and then decays.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot05.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t):</strong> Gradually rises and then plateaus.</figcaption>
+  </figure>
+
+</div>
+
+
+  <p style="text-align:center; font-size: 1rem; color:#374151; margin-top: 1rem;">
+    Each compartment displays smooth, symmetric wave-like patterns, consistent with diffusion and biological dynamics.
+  </p>
+
+
+<div class="image-gallery">
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot16.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t):</strong> Rapid decline followed by stabilization.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot17.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t):</strong> Rapid rise then plateau.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot18.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t):</strong> Rise-and-fall pattern with expected incubation lag.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot19.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t):</strong> Rise-and-fall pattern with delay after E(t).</figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/MOL Method(book's mthod)/Rplot20.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t):</strong> Monotonic increase as population recovers.</figcaption>
+  </figure>
+
+  
+</div>
+
+<p style="text-align:center; font-size: 1rem; color:#374151; margin-top: 1rem;">
+    We also track each compartment's value over time at the spatial center (<em>x = 0</em>), revealing typical epidemic patterns and delays.
+  </p>
+
+<h4>2. Crank–Nicolson Method</h4>
+<div class="image-gallery">
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot05.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot06.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot07.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot08.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot09.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot01.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot02.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot03.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Crank-Nicolson Method/Rplot04.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+</div>
+
+<h4>3. Explicit FD Method</h4>
+
+<div class="image-gallery">
+  
+  <img src="Results/Explicit Method/Rplot06.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot07.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot08.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot09.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot10.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot11.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot12.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot13.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot14.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Explicit Method/Rplot15.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+
+</div>
+
+<h4>4. Strang Splitting Method</h4>
+
+<div class="image-gallery">
+
+ <img src="Results/Strang Splitting Method/Rplot.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot01.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot02.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot03.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot04.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot05.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot06.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot07.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot08.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Strang Splitting Method/Rplot9.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+  
+</div>
+
+<h4>5. Finite Volume Method</h4>
+
+<div class="image-gallery">
+  <img src="Results/Finite Volume Method/Rplot.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot01.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot02.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot03.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot04.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot05.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+  
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot06.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot07.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot08.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Results/Finite Volume Method/Rplot9.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+</div>
+
+<h4>6. Spectral Method</h4>
+
+<div class="image-gallery">
+  <figure>
+    <img src="Rplot01.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot02.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot03.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot04.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot05.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot06.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot07.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot08.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot09.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot10.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+</div>
+
+
+<h3>B. Deep Learning Results</h3>
+
+
+<div class="image-gallery">
+  <figure>
+    <img src="Rplot01.png" alt="S(x,t) - Susceptible Population">
+    <figcaption><strong>S(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot02.png" alt="V(x,t) - Vaccinated Population">
+    <figcaption><strong>V(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot03.png" alt="E(x,t) - Exposed Population">
+    <figcaption><strong>E(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot04.png" alt="I(x,t) - Infected Population">
+    <figcaption><strong>I(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot05.png" alt="R(x,t) - Recovered Population">
+    <figcaption><strong>R(x,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot06.png" alt="S(0,t) - Susceptible over time">
+    <figcaption><strong>S(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot07.png" alt="V(0,t) - Vaccinated over time">
+    <figcaption><strong>V(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot08.png" alt="E(0,t) - Exposed over time">
+    <figcaption><strong>E(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot09.png" alt="I(0,t) - Infected over time">
+    <figcaption><strong>I(0,t)</strong></figcaption>
+  </figure>
+
+  <figure>
+    <img src="Rplot10.png" alt="R(0,t) - Recovered over time">
+    <figcaption><strong>R(0,t)</strong></figcaption>
+  </figure>
+
+  
+</div>
+
+<section>
+  <h2>C. Errors & Comparisons</h2>
+  <p>
+    The errors were computed as element-wise absolute differences from the MOL solution across the spatial grid.
+    This was done for all methods, including the deep learning model, and the mean absolute error was calculated
+    for each compartment (<strong>S, V, E, I, R</strong>) to quantify accuracy.
+  </p>
+
+  <h3>Mean Absolute Errors</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>S</th>
+        <th>V</th>
+        <th>E</th>
+        <th>I</th>
+        <th>R</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Explicit</td><td>0.0390</td><td>0.1524</td><td>0.1668</td><td>0.3759</td><td>1.7133</td></tr>
+      <tr><td>FVM</td><td>0.0407</td><td>0.1617</td><td>0.1667</td><td>0.3758</td><td>1.7129</td></tr>
+      <tr><td>CN</td><td>0.0287</td><td>0.1146</td><td>0.1657</td><td>0.3732</td><td>1.6934</td></tr>
+      <tr><td>SS</td><td>0.0272</td><td>0.1020</td><td>0.1671</td><td>0.3766</td><td>1.7161</td></tr>
+      <tr><td>Spectral</td><td>0.0315</td><td>0.1295</td><td>0.1649</td><td>0.3711</td><td>1.6796</td></tr>
+      <tr><td>DL</td><td>0.0397</td><td>0.0339</td><td>0.0573</td><td>0.0450</td><td>0.0673</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Runtime Comparison (seconds)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Mode</th>
+        <th>MOL</th>
+        <th>Explicit</th>
+        <th>FVM</th>
+        <th>CN</th>
+        <th>SS</th>
+        <th>DL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>ip = 1</td><td>0.14</td><td>0.23</td><td>1.15</td><td>2.13</td><td>3.27</td><td>1320</td></tr>
+      <tr><td>ip = 2</td><td>0.14</td><td>0.24</td><td>1.09</td><td>2.07</td><td>0.84</td><td>–</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Based on the error and runtime comparison, the <strong>DL method</strong> appears to be more accurate,
+    although it requires significantly more computational time.
+  </p>
+</section>
+
+<section>
+  <h2>VII. Improvements & Future Work</h2>
+  <ol>
+    <li><strong>Optimization Improvements:</strong> Start with SGD warm-up for stability, continue with Adam for fast convergence, and finalize with LBFGS for refinement.</li>
+    <li><strong>Model Architecture:</strong> Use deeper networks with ResNet-style residual connections for easier training.</li>
+    <li><strong>Loss Function Strategy:</strong> Try dynamic loss weighting: relative loss scaling, uncertainty-based weighting, or gradient balancing (e.g., GradNorm).</li>
+    <li><strong>Use of Real Epidemiological Data:</strong> Integrate real influenza surveillance data (e.g., CDC, WHO) to validate and calibrate PINN predictions for real-world use.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>References</h2>
+  <ol>
+    <li><a href="https://doi.org/10.1016/j.matcom.2019.08.002" target="_blank">Chen & Xu, Mathematical and Computer Modelling (2019)</a></li>
+    <li><a href="https://doi.org/10.1016/j.amc.2018.12.065" target="_blank">Jang et al., Applied Mathematics and Computation (2020)</a></li>
+    <li>Schiesser, *Differential Equation Analysis in Biomedical Science and Engineering*, Wiley (2014)</li>
+  </ol>
+</section>
+
+</body>
+</html>
