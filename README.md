@@ -14,7 +14,7 @@
 ## Problem Statement & Solution Overview:
 The original problem models the spread of influenza with vaccination and spatial diffusion, and was solved in the reference work using `the Method of Lines (MOL)`.
 , as required to implement two numerical solution schemes in addition to the book,
-### we implemented 4 numerical solutions:
+### we implemented 5 numerical solutions:
 
 - Explicit finite difference scheme
 
@@ -23,6 +23,8 @@ The original problem models the spread of influenza with vaccination and spatial
 - Finite volume method
 
 - Strang splitting
+  
+- Spectral Method
 ---
 After benchmarking the above classical numerical approaches,
 ### we developed a `Physics-Informed Neural Network (PINN)` model,
